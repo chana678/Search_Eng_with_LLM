@@ -1,20 +1,41 @@
-name: Sync to Hugging Face hub
+name: Sync to Hugging Face Space
+
 on:
   push:
     branches: [main]
-
-  # to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          lfs: true
-      - name: Push to hub
+          lfs: true  # Include Git LFS if needed
+
+      # Step 2: Configure Git
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Step 3: Add Hugging Face Space as a remote
+      - name: Add Hugging Face Space Remote
+        run: |
+          git remote add space https://huggingface.co/spaces/chana678/Search_Engine_LLM
+
+      # Step 4: Pull latest changes from Hugging Face Space
+      - name: Pull Latest Changes from Space
+        run: |
+          git fetch space
+          git merge space/main --strategy-option=theirs || true
+
+      # Step 5: Push Changes to Hugging Face Space
+      - name: Push Changes to Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push https://chana678:$HF_TOKEN@huggingface.co/spaces/chana678/Search_Engine_LLM main
+        run: |
+          git push https://chana678:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/chana678/Search_Engine_LLM main
